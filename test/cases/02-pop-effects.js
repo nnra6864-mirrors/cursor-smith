@@ -889,6 +889,27 @@ section("Typewriter (1.7.2): capitals strike deeper, the return timed to its sou
     const typed = (pos) => { e.lastActive = at(pos, text.length - 1); e.resolveHoldChar(at(pos + 1, text.length)); return e._typewriterHeavy; };
     ok("resolveHoldChar marks a capital's stroke heavy - W yes, 7 and b no", typed(3) === true && typed(4) === false && typed(1) === false);
   }
+  {
+    // Enter in a list (issue #53): the editor puts the next marker in with
+    // the line break, and the marker's space is no typed letter - no stroke,
+    // no carriage push past the new line's indent, no keyboard step.
+    const e = mk({ typewriterSpring: true, typewriterAdvance: true });
+    const at = (pos, docLen) => ({ x: pos * 8, top: 20, h: 24, pos, docLen, char: "" });
+    const run = (before, ins) => {
+      const text = before + ins;
+      e.app = { workspace: { activeEditor: { editor: { cm: { state: { doc: { length: text.length, sliceString: (a, b) => text.slice(a, b) } }, coordsAtPos: () => null } } } } };
+      e._typewriterT = 0; e._keyStepT = 0;
+      e.lastActive = at(before.length, before.length);
+      const r = e.resolveHoldChar(at(text.length, text.length));
+      return { r, struck: !!e._typewriterT, stepped: !!e._keyStepT };
+    };
+    const carried = [["- one", "\n- "], ["1. one", "\n2. "], ["\t- one", "\n\t- "], ["> one", "\n> "], ["- [ ] one", "\n- [ ] "], ["  * one", "\n  * "]];
+    const got = carried.map(([b, i]) => run(b, i));
+    ok("Enter carried on - a bullet, a number, a nested item, a quote, a task: no letter, no stroke, no step", got.every((x) => x.r === null && !x.struck && !x.stepped), got);
+    const sp = run("- one", " ");
+    ok("...a space typed after a marker still strikes and steps", sp.r === " " && sp.struck && sp.stepped, sp);
+    ok("...and a paste ending in a word is still its last letter", run("one", "\ntwo").r === "o");
+  }
 
   // The carriage return timed to the machine's own.
   const cr = mk({ typewriterReturn: true, typewriterReturnMs: 300 });

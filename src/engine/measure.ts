@@ -25,6 +25,10 @@ const IME_COMMIT_MS = 600;
 const IME_COMMIT_SLACK = 8;
 // How long an edit's insertions wait for the carets' moves that show them.
 const EDIT_RANGE_MS = 600;
+// An insertion that ends in a line break and only what the editor carries
+// onto the new line after it: the indent, quote markers, a list's marker
+// (bullet or number) and a task's box - Enter in a list or a quote.
+export const LINE_CARRIED_ON = /\n[\t >]*(?:(?:[-*+]|\d+[.)])[ \t]+(?:\[[^\]\n]\][ \t]+)?)?$/;
 
 export const measureMethods = {
   caretCoords(this: CursorSmithPlugin): CaretRecord | null {
@@ -906,8 +910,14 @@ export const measureMethods = {
         // The last CHARACTER inserted, not the last code unit: an emoji is
         // two units or more, and the single unit before the caret was half
         // of one - it popped as a broken glyph (1.6.7).
-        const justTyped = lastGrapheme(view.state.doc.sliceString(from, to));
-        if (justTyped && justTyped !== "\n") {
+        const insertedText = view.state.doc.sliceString(from, to);
+        const justTyped = lastGrapheme(insertedText);
+        // Enter that the editor carried on - the next list marker, a quote's
+        // "> ", the indent kept - is a line break, not the last character it
+        // added: the marker's space struck and advanced like a typed one,
+        // and Typewriter's carriage push threw the cursor past the new
+        // line's indent and back (issue #53).
+        if (justTyped && justTyped !== "\n" && !LINE_CARRIED_ON.test(insertedText)) {
           // Where the letter landed: its own place in the note now, not the
           // caret before it. They differ whenever typing moved the line -
           // Word-Smith's paragraph indent comes onto a line with its first
