@@ -156,6 +156,8 @@ Five, all in the Command Palette, all take a hotkey. The Behavior page shows the
 
 **One device only.** *Behavior → Enable on this device* switches the cursor off on the device you're holding and nowhere else.
 
+**Your language.** The settings, commands and notices follow Obsidian's language: English, 简体中文, 繁體中文, 日本語, 한국어, Deutsch, Français, Español, Português (Brasil), Русский and Italiano. Spotted a clumsy translation? Open an issue.
+
 ## Building from source
 
 A TypeScript project: `src/` holds the modules, `npm run build` bundles them into `main.js`, `npm run check` type-checks, `npm test` runs the suite (2,500 assertions) against the built bundle. [BUILDING.md](BUILDING.md) has the layout.

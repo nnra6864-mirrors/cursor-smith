@@ -12,6 +12,7 @@
 import { Notice } from "obsidian";
 import { isTextCaretHost } from "../util/motion";
 import { VIM_MODE_LABELS } from "../settings/settings";
+import { t } from "../i18n/i18n";
 import { EditorView } from "@codemirror/view";
 import type CursorSmithPlugin from "../plugin";
 
@@ -48,7 +49,7 @@ export const vimMethods = {
       // would otherwise be a silent no-feedback command - it removes the one
       // thing that was showing the mode. Say it as the settings' switch is
       // named: Vim mode, on or off (not "CUA / Normal").
-      new Notice(`Cursor-Smith: Vim mode ${next ? "on" : "off"}`);
+      new Notice(t(next ? "Cursor-Smith: Vim mode on" : "Cursor-Smith: Vim mode off"));
       this.refreshSettingTab();
     } finally {
       // In a finally, not after the await: setVimModeEnabled swallows its own

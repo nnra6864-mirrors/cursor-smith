@@ -11,6 +11,7 @@ import { readableGlyphColor } from "../util/color";
 import { DemoStrip } from "./demo";
 import type { VimLook } from "./demo";
 import { ROLL_TOGGLES, rollAllowed } from "./randomize";
+import { t, tOpts, tParts, tNumber } from "../i18n/i18n";
 import type { DropdownOptions, Look, LookCards, LookSettingsHooks, Needs, RailEffect, RowOptions, SettingKey, SliderOptions, SwatchOptions } from "../types";
 
 // The effects, in the order the Effects page lists them: the master key,
@@ -65,9 +66,9 @@ class PresetPrompt extends Modal {
     };
     field.addEventListener("keydown", (ev) => { if (ev.key === "Enter") { ev.preventDefault(); void go(); } });
     const buttons = this.contentEl.createDiv({ cls: "modal-button-container" });
-    const ok = buttons.createEl("button", { cls: "mod-cta", text: "OK", attr: { type: "button" } });
+    const ok = buttons.createEl("button", { cls: "mod-cta", text: t("OK"), attr: { type: "button" } });
     ok.addEventListener("click", () => { void go(); });
-    const cancel = buttons.createEl("button", { text: "Cancel", attr: { type: "button" } });
+    const cancel = buttons.createEl("button", { text: t("Cancel"), attr: { type: "button" } });
     cancel.addEventListener("click", () => this.close());
     this.field = field;
   }
@@ -140,6 +141,26 @@ export class CursorSmithSettingTab extends PluginSettingTab {
     if (vim) items.push(...this.vimDefinitions());
     else items.push(...this.normalDefinitions());
     items.push(this.footerRow());
+    return this.translated(items);
+  }
+
+  // The tree in Obsidian's language (i18n.ts): every name, description,
+  // heading and page summary, once, as the tree is built - the rows are
+  // written in English everywhere above. A description that is markup
+  // (iconDesc) was translated as it was made. The page summaries are
+  // parts joined by " · ", each part looked up on its own.
+  translated(items: SettingDefinitionItem[]): SettingDefinitionItem[] {
+    const walk = (list: unknown[]) => {
+      for (const it of list) {
+        const d = it as { name?: unknown; desc?: unknown; heading?: unknown; items?: unknown[]; displayValue?: () => string };
+        if (typeof d.name === "string" && d.name) d.name = t(d.name);
+        if (typeof d.desc === "string" && d.desc) d.desc = t(d.desc);
+        if (typeof d.heading === "string" && d.heading) d.heading = t(d.heading);
+        if (typeof d.displayValue === "function") { const value = d.displayValue; d.displayValue = () => tParts(value()); }
+        if (Array.isArray(d.items)) walk(d.items);
+      }
+    };
+    walk(items);
     return items;
   }
 
@@ -193,7 +214,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
   iconDesc(icon: string, text: string): DocumentFragment {
     return createFragment((f) => {
       setIcon(f.createSpan({ cls: "cursor-smith-page-icon" }), icon);
-      f.appendText(text);
+      f.appendText(t(text));
     });
   }
 
@@ -335,18 +356,19 @@ export class CursorSmithSettingTab extends PluginSettingTab {
     // guard is what makes the pass converge; the first cut re-wrote "Off"
     // on every call and hung Obsidian in a mutation loop).
     const wanted = (value: Element) => value.getAttribute("data-cs-effects") === sig
-      && (on.length ? !!value.querySelector(".cursor-smith-value-icon") : value.getText() === "Off");
+      && (on.length ? !!value.querySelector(".cursor-smith-value-icon") : value.getText() === t("Off"));
+    // The entry by its name as shown - in Obsidian's language.
     const rows = Array.from(root.querySelectorAll(".setting-item")).filter((row) => {
       const name = row.querySelector(".setting-item-name");
-      return !!name && name.getText().trim() === "Effects" && !!row.querySelector(".setting-item-value") && !wanted(row.querySelector(".setting-item-value") as Element);
+      return !!name && name.getText().trim() === t("Effects") && !!row.querySelector(".setting-item-value") && !wanted(row.querySelector(".setting-item-value") as Element);
     });
     for (const row of rows) {
       const value = row.querySelector(".setting-item-value") as HTMLElement;
       value.empty();
       value.setAttribute("data-cs-effects", sig);
-      if (!on.length) { value.setText("Off"); continue; }
-      value.setAttribute("title", on.map((e) => e.name).join(", "));
-      for (const e of on) setIcon(value.createSpan({ cls: "cursor-smith-value-icon", attr: { "aria-label": e.name } }), e.icon);
+      if (!on.length) { value.setText(t("Off")); continue; }
+      value.setAttribute("title", on.map((e) => t(e.name)).join(", "));
+      for (const e of on) setIcon(value.createSpan({ cls: "cursor-smith-value-icon", attr: { "aria-label": t(e.name) } }), e.icon);
     }
   }
 
@@ -438,17 +460,17 @@ export class CursorSmithSettingTab extends PluginSettingTab {
           line.createSpan({ cls: "cursor-smith-keys-name", text: name });
           const ctl = line.createSpan({ cls: "cursor-smith-keys-ctl" });
           const keys = keyOf(full);
-          chips.push([full, ctl.createSpan({ cls: "setting-hotkey cursor-smith-keys-key" + (keys ? "" : " mod-empty is-blank"), text: keys || "Blank" })]);
-          const add = ctl.createEl("button", { cls: "clickable-icon setting-add-hotkey-button cursor-smith-keys-add", attr: { type: "button", "aria-label": "Set a hotkey for " + name } });
+          chips.push([full, ctl.createSpan({ cls: "setting-hotkey cursor-smith-keys-key" + (keys ? "" : " mod-empty is-blank"), text: keys || t("Blank") })]);
+          const add = ctl.createEl("button", { cls: "clickable-icon setting-add-hotkey-button cursor-smith-keys-add", attr: { type: "button", "aria-label": t("Set a hotkey for {name}", { name }) } });
           setIcon(add, "plus-circle");
           add.addEventListener("click", () => { this.openHotkeysFor(String(cmd.name || name)); });
         }
-        setting.descEl.createDiv({ cls: "cursor-smith-keys-note", text: "Or set them under Settings \u2192 Hotkeys." });
+        setting.descEl.createDiv({ cls: "cursor-smith-keys-note", text: t("Or set them under Settings \u2192 Hotkeys.") });
         this.onRefresh(() => {
           for (const [full, el] of chips) {
             if (el.isConnected === false) continue;
             const keys = keyOf(full);
-            const text = keys || "Blank";
+            const text = keys || t("Blank");
             if (el.textContent !== text) el.setText(text);
             el.toggleClass("is-blank", !keys);
             el.toggleClass("mod-empty", !keys);
@@ -607,7 +629,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
           // uses the preset, filling the card's left side, and the actions
           // are its siblings - every one of them reachable by Tab.
           const card = strip.createDiv({ cls: "cursor-smith-pcard" + (isActive ? " is-active" : "") });
-          const use = card.createEl("button", { cls: "cursor-smith-pcard-use", attr: { type: "button", "aria-label": `Use preset ${name}`, "aria-pressed": isActive ? "true" : "false" } });
+          const use = card.createEl("button", { cls: "cursor-smith-pcard-use", attr: { type: "button", "aria-label": t("Use preset {name}", { name }), "aria-pressed": isActive ? "true" : "false" } });
           if (isActive) setIcon(use.createSpan({ cls: "cursor-smith-tick" }), "check");
           const { color, ramp, gradient } = this.demoColors(look, dark);
           // Only the card in use plays (two passes, then it rests); the
@@ -621,7 +643,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
           });
           const actions = card.createSpan({ cls: "cursor-smith-pcard-actions" });
           const action = (icon: string, label: string, run: () => void) => {
-            const b = actions.createEl("button", { cls: "cursor-smith-pcard-action clickable-icon", attr: { type: "button", "aria-label": label, title: label } });
+            const b = actions.createEl("button", { cls: "cursor-smith-pcard-action clickable-icon", attr: { type: "button", "aria-label": t(label), title: t(label) } });
             setIcon(b, icon);
             b.addEventListener("click", run);
             return b;
@@ -648,13 +670,13 @@ export class CursorSmithSettingTab extends PluginSettingTab {
               return;
             }
             trash.addClass("is-armed");
-            trash.setText("Delete?");
-            trash.setAttribute("aria-label", "Tap again to delete");
+            trash.setText(t("Delete?"));
+            trash.setAttribute("aria-label", t("Tap again to delete"));
             armed = window.setTimeout(() => {
               trash.removeClass("is-armed");
               trash.empty();
               setIcon(trash, "trash");
-              trash.setAttribute("aria-label", "Delete this preset");
+              trash.setAttribute("aria-label", t("Delete this preset"));
             }, DELETE_ARM_MS);
           });
         }
@@ -662,7 +684,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
         const more = (icon: string, label: string, run: () => void) => {
           const b = strip.createEl("button", { cls: "cursor-smith-pcard cursor-smith-pcard-more", attr: { type: "button" } });
           setIcon(b.createSpan({ cls: "cursor-smith-pcard-more-icon" }), icon);
-          b.createSpan({ cls: "cursor-smith-pcard-name", text: label });
+          b.createSpan({ cls: "cursor-smith-pcard-name", text: t(label) });
           b.addEventListener("click", run);
         };
         // Save and Import on a line of their own below the presets, however
@@ -671,14 +693,14 @@ export class CursorSmithSettingTab extends PluginSettingTab {
         strip.createDiv({ cls: "cursor-smith-pcard-break" });
         more("save", "Save", () => this.savePresetPrompt(vim));
         more("download", "Import", () => {
-          new PresetPrompt(this.app, vim ? "Import a Vim share code" : "Import a share code", "Paste the code here", async (code) => {
+          new PresetPrompt(this.app, t(vim ? "Import a Vim share code" : "Import a share code"), t("Paste the code here"), async (code) => {
             if (!code) return false;
             const ok = vim ? await plugin.importVimPreset(code) : await plugin.importPreset(code);
             if (ok) { this.update(); return true; }
             // The two code kinds are one character apart at a glance, so say
             // which mistake was made rather than a flat "invalid".
             const other = vim ? SHARE_VERSION + "|" : SHARE_VERSION_VIM + "|";
-            return code.startsWith(other) ? (vim ? "That's a regular code, not a Vim one" : "That's a Vim code, not a regular one") : "Invalid code";
+            return t(code.startsWith(other) ? (vim ? "That's a regular code, not a Vim one" : "That's a Vim code, not a regular one") : "Invalid code");
           }).open();
         });
       },
@@ -907,7 +929,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
         renderCursorStyleSetting: (setting, rerender) => {
           setting.addDropdown((dropdown) =>
             dropdown
-              .addOption("Box", "Box").addOption("Line", "Line").addOption("Underline", "Underline")
+              .addOption("Box", t("Box")).addOption("Line", t("Line")).addOption("Underline", t("Underline"))
               .setValue(plugin.settings.cursorStyle)
               // Re-render as soon as the value is in memory, not after the
               // save lands - the rows read memory, and enable() does too.
@@ -994,7 +1016,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
         sl.setLimits(1, key === "rollChaos" ? ROLL_CHAOS_MAX : ROLL_DIAL_MAX, 1).setValue(plugin.settings[key]).onChange(async (v) => { plugin.settings[key] = v; await plugin.saveSettings(); });
       }).addExtraButton((btn) => btn
         .setIcon("rotate-ccw")
-        .setTooltip(`Restore default (${DEFAULT_SETTINGS[key]})`)
+        .setTooltip(t("Restore default ({value})", { value: DEFAULT_SETTINGS[key] }))
         .onClick(() => {
           plugin.settings[key] = DEFAULT_SETTINGS[key];
           if (handle) handle.setValue(DEFAULT_SETTINGS[key]);
@@ -1004,13 +1026,13 @@ export class CursorSmithSettingTab extends PluginSettingTab {
     // The shape a roll keeps, or any - with Vim on, the modes' shapes.
     if (plugin.isVimUiMode()) {
       items.push(this.row("Mode shapes", "Vim's own: a box in Normal, a line in Insert, an underline in Replace. Or one for all.", (s) => {
-        s.addDropdown((d) => d.addOptions({ vim: "Vim's own", any: "Any (one for all)", Box: "Box", Line: "Line", Underline: "Underline" })
+        s.addDropdown((d) => d.addOptions(tOpts({ vim: "Vim's own", any: "Any (one for all)", Box: "Box", Line: "Line", Underline: "Underline" }))
           .setValue(plugin.settings.rollVimShape || "vim")
           .onChange(async (v) => { plugin.settings.rollVimShape = v; await plugin.saveSettings(); }));
       }));
     } else {
       items.push(this.row("Shape", "Roll only this cursor shape, or any.", (s) => {
-        s.addDropdown((d) => d.addOptions({ any: "Any shape", Box: "Box", Line: "Line", Underline: "Underline" })
+        s.addDropdown((d) => d.addOptions(tOpts({ any: "Any shape", Box: "Box", Line: "Line", Underline: "Underline" }))
           .setValue(plugin.settings.rollShape || "any")
           .onChange(async (v) => { plugin.settings.rollShape = v; await plugin.saveSettings(); }));
       }));
@@ -1037,7 +1059,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
       () => {
         const out = ROLL_TOGGLES.filter((k) => !rollAllowed(plugin.settings.rollEffects, k)).length;
         const shape = plugin.settings.rollShape && plugin.settings.rollShape !== "any" ? `${plugin.settings.rollShape} · ` : "";
-        return shape + `Chaos ${plugin.settings.rollChaos}` + (out ? ` · ${ROLL_TOGGLES.length - out} effects` : "");
+        return shape + t("Chaos {n}", { n: plugin.settings.rollChaos }) + (out ? " · " + t("{n} effects", { n: ROLL_TOGGLES.length - out }) : "");
       });
   }
 
@@ -1088,11 +1110,11 @@ export class CursorSmithSettingTab extends PluginSettingTab {
     const plugin = this.plugin;
     const library = vim ? plugin.getVimPresets() : plugin.getUserPresets();
     let warned = "";
-    new PresetPrompt(this.app, vim ? "Save these five mode cursors as" : "Save this look as", vim ? "Vim preset name" : "Preset name", async (name) => {
+    new PresetPrompt(this.app, t(vim ? "Save these five mode cursors as" : "Save this look as"), t(vim ? "Vim preset name" : "Preset name"), async (name) => {
       if (!name) return false;
       if (name in library && warned !== name) {
         warned = name;
-        return `A preset named ${name} exists. OK again to replace it.`;
+        return t("A preset named {name} exists. OK again to replace it.", { name });
       }
       if (vim) await plugin.saveVimPreset(name); else await plugin.saveUserPreset(name);
       saved?.(name);
@@ -1110,12 +1132,12 @@ export class CursorSmithSettingTab extends PluginSettingTab {
       render: (setting) => {
         this.resetRow(setting);
         setting.addButton((b) => {
-          b.setButtonText("Save as preset").onClick(() => {
-            this.savePresetPrompt(this.plugin.isVimUiMode(), (name) => { setting.setDesc(`Saved as ${name}.`); });
+          b.setButtonText(t("Save as preset")).onClick(() => {
+            this.savePresetPrompt(this.plugin.isVimUiMode(), (name) => { setting.setDesc(t("Saved as {name}.", { name })); });
           });
           b.buttonEl.empty();
           setIcon(b.buttonEl.createSpan({ cls: "cursor-smith-roll-dice" }), "save");
-          b.buttonEl.createSpan({ text: "Save as preset" });
+          b.buttonEl.createSpan({ text: t("Save as preset") });
         });
       },
     };
@@ -1133,7 +1155,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
         const say = (text: string) => setting.setDesc(text);
         if (this._rollSaid && this._rollSaidVim === plugin.isVimUiMode()) say(this._rollSaid);
         setting.addButton((b) => {
-          b.setButtonText("Randomize").setCta().onClick(async () => {
+          b.setButtonText(t("Randomize")).setCta().onClick(async () => {
             const { look, family } = await plugin.rollCursor();
             say(this.rolled(look, family));
             this.playRollDemo();
@@ -1141,7 +1163,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
           // Dice, then the word.
           b.buttonEl.empty();
           setIcon(b.buttonEl.createSpan({ cls: "cursor-smith-roll-dice" }), "dices");
-          b.buttonEl.createSpan({ text: "Randomize" });
+          b.buttonEl.createSpan({ text: t("Randomize") });
         });
       },
     };
@@ -1162,13 +1184,13 @@ export class CursorSmithSettingTab extends PluginSettingTab {
     const looks = family ? Object.values(family) : [look];
     const any = (k: keyof Look) => looks.some((l) => !!l[k]);
     const shapes = new Set(looks.map((l) => String(l.cursorStyle || "Box")));
-    const parts = [family && shapes.size > 1 ? "Vim's shapes" : String(look.cursorStyle || "Box")];
-    if (!family) parts.push(look.gradientEnabled ? `${look.gradientCount ?? 2} colors` : "one color");
-    if (any("smoothEnabled")) parts.push("gliding");
-    const effects = RAIL_EFFECTS.filter((e) => any(e.key)).map((e) => e.name);
-    parts.push(effects.length ? effects.join(", ") : "no effects");
+    const parts = [t(family && shapes.size > 1 ? "Vim's shapes" : String(look.cursorStyle || "Box"))];
+    if (!family) parts.push(look.gradientEnabled ? t("{n} colors", { n: look.gradientCount ?? 2 }) : t("one color"));
+    if (any("smoothEnabled")) parts.push(t("gliding"));
+    const effects = RAIL_EFFECTS.filter((e) => any(e.key)).map((e) => t(e.name));
+    parts.push(effects.length ? effects.join(t(", ")) : t("no effects"));
     const voiced = looks.find((l) => !!l.typewriterSound);
-    if (voiced) parts.push("sound: " + soundMachine(voiced.typewriterSoundVoice).label);
+    if (voiced) parts.push(t("sound: {name}", { name: soundMachine(voiced.typewriterSoundVoice).label }));
     return parts.join(" · ");
   }
 
@@ -1283,7 +1305,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
       const cfg: Partial<Look> = plugin.settings.vimModes[m] || {};
       const tint = isDarkTheme ? cfg.colorDark : cfg.colorLight;
       const btn = tabWrap.createEl("button", {
-        text: VIM_MODE_LABELS[m],
+        text: t(VIM_MODE_LABELS[m]),
         cls: "cursor-smith-chip cursor-smith-mode-tab" + (active ? " is-picked" : ""),
         attr: { type: "button", "aria-pressed": active ? "true" : "false" },
       });
@@ -1313,7 +1335,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
       set,
       renderCursorStyleSetting: (setting, rerender) => {
         setting.addDropdown((d) =>
-          d.addOption("Box", "Box").addOption("Line", "Line").addOption("Underline", "Underline")
+          d.addOption("Box", t("Box")).addOption("Line", t("Line")).addOption("Underline", t("Underline"))
             .setValue(target.cursorStyle).onChange(setR("cursorStyle", rerender)));
       },
       renderTorchToggleSetting: (setting, rerender) => {
@@ -1446,7 +1468,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
     const dropdown = (name: string, desc: string, key: keyof Look, options: Record<string, string>, { depth = 0, value, onChange, when }: DropdownOptions = {}) => {
       owns(key);
       return row(name, desc, (s) => {
-        s.addDropdown((d) => d.addOptions(options)
+        s.addDropdown((d) => d.addOptions(tOpts(options))
           .setValue(value !== undefined ? value : get(key) as string)
           .onChange(onChange || set(key)));
       }, { depth, when });
@@ -1479,7 +1501,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
         s.addSlider((sl) => { handle = sl; sl.setLimits(min, max, step).setValue((get(key) ?? fallback) as number).onChange(write); })
           .addExtraButton((btn) => btn
             .setIcon("rotate-ccw")
-            .setTooltip(`Restore default (${DEFAULT_SETTINGS[key]})`)
+            .setTooltip(t("Restore default ({value})", { value: String(DEFAULT_SETTINGS[key]) }))
             .onClick(() => {
               const v = DEFAULT_SETTINGS[key];
               if (handle) handle.setValue(v as number);
@@ -1504,7 +1526,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
           // moves into the cell so the label can sit under it.
           const input = s.controlEl.lastElementChild;
           if (input && input !== cell) cell.appendChild(input);
-          cell.createSpan({ cls: "cursor-smith-swatch-label", text: labels[i] ?? "" });
+          cell.createSpan({ cls: "cursor-smith-swatch-label", text: t(labels[i] ?? "") });
         });
       }, { depth, when });
     };
@@ -1688,12 +1710,12 @@ export class CursorSmithSettingTab extends PluginSettingTab {
       return Promise.all(writes.map((w) => Promise.resolve(w)));
     };
     effects.push(row("Cursor on delete", "Your cursor eats the letters you delete.", (st) => {
-      st.addDropdown((d) => d.addOptions(EATER_NAMES).setValue(eater()).onChange(async (v) => { await choose(EATER_KEYS, v); }));
+      st.addDropdown((d) => d.addOptions(tOpts(EATER_NAMES)).setValue(eater()).onChange(async (v) => { await choose(EATER_KEYS, v); }));
     }, { depth: 1, when: pop }));
     effects.push(toggle("Shredded letters", "Show the letters going through the blades and falling as ribbons. Off, they simply vanish.", "shredderLetters",
       { depth: 2, when: () => pop() && eater() === "shredder" }));
     effects.push(row("Letters on delete", "Deleted letters burst apart or float away.", (st) => {
-      st.addDropdown((d) => d.addOptions(LETTER_NAMES).setValue(letterChoiceOf(lookNow())).onChange(async (v) => { await choose(LETTER_KEYS, v); }));
+      st.addDropdown((d) => d.addOptions(tOpts(LETTER_NAMES)).setValue(letterChoiceOf(lookNow())).onChange(async (v) => { await choose(LETTER_KEYS, v); }));
     }, { depth: 1, when: pop }));
     effects.push(toggle("Thunderstrike", "Enter calls down a bolt of pixelated lightning onto the new line.", "thunderstrike", { depth: 1, gate: true, when: pop }));
     effects.push(slider("Bolt size", "How fine the lightning is, in pixels per block.", "thunderstrikeSize", [1, 5, 1], { depth: 2, fallback: 2, when: all(pop, on("thunderstrike")) }));
@@ -1900,7 +1922,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
     const KIND_NAMES: Record<SoundKind, string> = { typewriter: "Typewriters", keyboard: "Keyboards", other: "Something else" };
     const SOUND_KINDS = Object.fromEntries(Object.entries(KIND_NAMES).filter(([k]) => SOUND_MACHINES.some((m) => m.kind === k)));
     sounds.push(row("Category", "Typewriters or keyboards.", (s) => {
-      s.addDropdown((d) => d.addOptions(SOUND_KINDS).setValue(kindOf()).onChange((k) => {
+      s.addDropdown((d) => d.addOptions(tOpts(SOUND_KINDS)).setValue(kindOf()).onChange((k) => {
         const first = SOUND_MACHINES.find((m) => m.kind === k);
         if (first) void rebuild("typewriterSoundVoice")(first.id);
       }));
@@ -1909,7 +1931,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
       s.addDropdown((d) => d.addOptions(Object.fromEntries(SOUND_MACHINES.filter((m) => m.kind === kindOf()).map((m) => [m.id, m.label])))
         .setValue(soundMachine(get("typewriterSoundVoice")).id)
         .onChange(redraw("typewriterSoundVoice")));
-      s.addExtraButton((b) => b.setIcon("play").setTooltip("Play a few words").onClick(() => { void this.plugin.soundPreview(); }));
+      s.addExtraButton((b) => b.setIcon("play").setTooltip(t("Play a few words")).onClick(() => { void this.plugin.soundPreview(); }));
     }, { depth: 1, when: sounding }));
     sounds.push(slider("Volume", "How loud the sounds are, as a percentage.", "typewriterSoundVolume", [0, 100, 5], { depth: 1, fallback: 50, when: sounding }));
     sounds.push(toggle("Bell", "Enter at the end of a line rings the typewriter's margin bell.", "typewriterSoundBell",
@@ -1932,7 +1954,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
         if (get("cursorRounded")) parts.push("rounded");
         return parts.join(" · ");
       },
-      Blinking: () => (get("blinkingEnabled") ? `On · ${Number(get("blinkSpeed") ?? 1).toFixed(1)}×` + (get("blinkBreathing") ? " · breathing" : "") : "Off"),
+      Blinking: () => (get("blinkingEnabled") ? `On · ${tNumber(Number(get("blinkSpeed") ?? 1), 1)}×` + (get("blinkBreathing") ? " · breathing" : "") : "Off"),
       "Smooth movement": () => (get("smoothEnabled") ? "On" : "Off"),
       // Every effect that is on, by name; Obsidian ellipsizes a long one.
       Effects: () => {
@@ -1968,7 +1990,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
         setting.settingEl.addClass("cursor-smith-reset-row");
         const btn = setting.controlEl.createEl("button", { cls: "cursor-smith-reset-link", attr: { type: "button" } });
         setIcon(btn, "rotate-ccw");
-        btn.createSpan({ text: `Reset ${title} to defaults` });
+        btn.createSpan({ text: t("Reset {title} to defaults", { title: t(title) }) });
         btn.addEventListener("click", reset);
       },
     };
@@ -1998,7 +2020,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
           const el = rail.createEl("button", { cls: "cursor-smith-chip", attr: { type: "button" } });
           if (icon) setIcon(el.createSpan({ cls: "cursor-smith-tick" }), "check");
           if (icon) setIcon(el.createSpan({ cls: "cursor-smith-chip-icon" }), icon);
-          el.createSpan({ text: name });
+          el.createSpan({ text: t(name) });
           el.addEventListener("click", () => choose(key));
           chips.push({ key, el });
         };
@@ -2047,7 +2069,7 @@ export class CursorSmithSettingTab extends PluginSettingTab {
   // hint in its description, while that setting is off. Repainted on every
   // refresh (see _refreshers).
   needsHint(setting: Setting, needs: Needs) {
-    const hint = setting.descEl.createSpan({ cls: "cursor-smith-needs-hint", text: " " + needs.hint });
+    const hint = setting.descEl.createSpan({ cls: "cursor-smith-needs-hint", text: t(needs.hint) });
     const paint = () => {
       const ok = needs.when();
       setting.settingEl.toggleClass("cursor-smith-needs", !ok);

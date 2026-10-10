@@ -24,6 +24,7 @@ import {
 } from "../constants";
 import { fitCanvasRegion, wrapperClipForStatusBar } from "../util/geometry";
 import { presetToCode } from "../settings/share";
+import { t } from "../i18n/i18n";
 import type { EditorView } from "@codemirror/view";
 import type {
   Bounds,
@@ -1457,7 +1458,7 @@ export const engineMethods = {
   // the tick adds to them only while that is set; see the tick.
   performanceReport(this: CursorSmithPlugin, seconds: number = 10) {
     if (this._perf) {
-      new Notice("Cursor-Smith: a performance report is already running.");
+      new Notice(t("Cursor-Smith: a performance report is already running."));
       return;
     }
     const perf = this._perf = this._freshPerf();
@@ -1471,7 +1472,7 @@ export const engineMethods = {
     const onKey = () => { perf.keys++; };
     const doc = (this.canvas && this.canvas.ownerDocument) || document;
     doc.addEventListener("keydown", onKey, true);
-    new Notice(`Cursor-Smith: measuring for ${seconds} seconds - keep using Obsidian as you normally would.`);
+    new Notice(t("Cursor-Smith: measuring for {n} seconds - keep using Obsidian as you normally would.", { n: seconds }));
     window.setTimeout(() => {
       this._perf = null;
       if (po) { try { po.disconnect(); } catch { /* gone */ } }
@@ -1481,12 +1482,12 @@ export const engineMethods = {
         try {
           if (typeof navigator === "undefined" || !navigator.clipboard || !navigator.clipboard.writeText) throw new Error("no clipboard");
           await navigator.clipboard.writeText(text);
-          new Notice("Cursor-Smith: report copied to the clipboard.");
+          new Notice(t("Cursor-Smith: report copied to the clipboard."));
         } catch {
           // No clipboard: the console is the fallback delivery, so this is
           // the one log the plugin makes, and only on that path.
           console.warn(text);
-          new Notice("Cursor-Smith: report is in the developer console (Ctrl+Shift+I).");
+          new Notice(t("Cursor-Smith: report is in the developer console (Ctrl+Shift+I)."));
         }
       })();
     }, seconds * 1000);

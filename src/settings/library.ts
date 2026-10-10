@@ -20,6 +20,7 @@ import {
   dialToRoll,
 } from "./settings";
 import { codeToPreset, codeToVimPreset } from "./share";
+import { t } from "../i18n/i18n";
 import { rollLook, rollVimLooks } from "./randomize";
 import type { RollOptions } from "./randomize";
 import type { CursorSmithSettings, Look } from "../types";
@@ -127,7 +128,7 @@ export const libraryMethods = {
     const { look, family } = await this.rollCursor();
     if (this.settingTab) this.settingTab.rolled(look, family);
     this.refreshSettingTab();
-    new Notice("Cursor randomized");
+    new Notice(t("Cursor randomized"));
   },
 
   async deleteUserPreset(this: CursorSmithPlugin, name: string) {
@@ -211,7 +212,7 @@ export const libraryMethods = {
   async cycleVimPreset(this: CursorSmithPlugin, direction: number) {
     const names = Object.keys(this.getVimPresets());
     if (names.length === 0) {
-      new Notice("Cursor-Smith: no Vim presets are saved");
+      new Notice(t("Cursor-Smith: no Vim presets are saved"));
       return;
     }
     const currentIdx = names.indexOf(this.settings.vimActivePreset);
@@ -221,7 +222,7 @@ export const libraryMethods = {
     // (which also flips Obsidian's vim bindings when auto-control is set).
     if (!this.settings.vimModeEnabled) await this.setVimModeEnabled(true);
     await this.loadVimPreset(nextName);
-    new Notice(`Cursor-Smith: Vim preset — ${nextName}`);
+    new Notice(t("Cursor-Smith: Vim preset — {name}", { name: nextName }));
     this.refreshSettingTab();
   },
 

@@ -328,6 +328,9 @@ button.cursor-smith-chip:hover {
 .cursor-smith-needs-hint {
   display: none;
   color: var(--text-accent);
+  /* The gap before it is a margin, not a typed space: after a Chinese or
+     Japanese full stop a space reads wrong (1.8.1, the translations). */
+  margin-inline-start: 0.3em;
 }
 .cursor-smith-needs-hint.is-shown {
   display: inline;

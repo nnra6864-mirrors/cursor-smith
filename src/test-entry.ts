@@ -29,6 +29,8 @@ import { CAPS_GROW, DELETE_INVERT_MS, capsEase, capsKeys, capsScale } from "./ef
 import { underSerifSize } from "./paint/paint-shape";
 import { anvilKeyStrikes, anvilWordBefore, anvilPoint, anvilStep, anvilCell, anvilRainbow } from "./effects/effects-anvil";
 import { ANVIL_SPARKS, ANVIL_ANGLE, ANVIL_SPEED, ANVIL_DRAG, ANVIL_GRAVITY, ANVIL_LIFE, ANVIL_SPREAD, ANVIL_DROP, ANVIL_PALETTE, ANVIL_MIN_GAP_MS, ANVIL_SPARK_BUDGET, ANVIL_SPARK_MIN, ANVIL_TRAIL_DT } from "./constants";
+import { t, tOpts, tParts, setLocale, locales, collectStrings, appLanguage, TABLES } from "./i18n/i18n";
+import { ZH } from "./i18n/zh";
 import { BACKMAN_BEND_KICK, BACKMAN_BEND_MAX, BACKMAN_CHOMP_MS, BACKMAN_SLIDE_MS, BACKMAN_GROW, BACKMAN_GULP_MS, BACKMAN_HOLD_MS, backManBite, backManChew, backManDown, backManEye, backManEyeEase, backManOutline, backManShape, backManSpring, BACKMAN_BIG } from "./effects/effects-backman";
 
 export const __test = {
@@ -37,6 +39,7 @@ export const __test = {
   smoothCatchRate, smoothTypingRate,
   demoStep, demoInitialState, demoHeatColor, demoShapeOf, cardScript, SCRIPT_BACK_MS, demoIdleAt, demoStepScript, scriptFor, vimScriptFor, VIM_LINES, SCRIPT_LINES, SCRIPT_MAX, READ_SCALE, READ_FEW, SHORT_MAX, stageRoom, readableChars, DemoStrip, ROLL_TOGGLES, rollAllowed, demoGlide, demoGeometryOf, demoBlinkReal,
   anvilKeyStrikes, anvilWordBefore, anvilPoint, anvilStep, anvilCell, anvilRainbow, ANVIL_SPARKS, ANVIL_ANGLE, ANVIL_SPEED, ANVIL_DRAG, ANVIL_GRAVITY, ANVIL_LIFE, ANVIL_SPREAD, ANVIL_DROP, ANVIL_PALETTE, ANVIL_MIN_GAP_MS, ANVIL_SPARK_BUDGET, ANVIL_SPARK_MIN, ANVIL_TRAIL_DT,
+  t, tOpts, tParts, setLocale, locales, collectStrings, appLanguage, TABLES, ZH,
   EngineProto: CursorSmithPlugin.prototype,
   SettingTabPrototype: CursorSmithSettingTab.prototype,
 };

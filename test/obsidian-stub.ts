@@ -16,6 +16,8 @@ const RealSetting = Setting;
 export function setIcon(el: any, icon: string) { if (el) el.icon = icon; }
 export const addedIcons: Record<string, string> = {};
 export function addIcon(id: string, svg: string) { addedIcons[id] = svg; }
+// Obsidian's app language: "en" unless a test sets another (i18n.ts).
+export function getLanguage(): string { return (globalThis as { __csTestLanguage?: string }).__csTestLanguage || "en"; }
 // Just enough Modal for the preset prompt to construct: elements from the
 // harness's createEl global, open/close recorded.
 export class Modal {

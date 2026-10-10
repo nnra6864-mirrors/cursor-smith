@@ -5,6 +5,7 @@ import { applyReducedMotion, isTextCaretHost } from "./util/motion";
 import { DEFAULT_PRESET_NAME, DEFAULT_VIM_PRESETS, applyStarterPreset, seedPresets } from "./settings/presets";
 import { DEFAULT_SETTINGS, VIM_MODE_KEYS, cloneVimModes, migrateLegacyKeys, pickLook, soundsApart, whenAllows } from "./settings/settings";
 import { CursorSmithSettingTab } from "./settings/settings-tab";
+import { t } from "./i18n/i18n";
 import type { Text as DocText } from "@codemirror/state";
 import type { StopsMemo,
   Bounds,
@@ -953,7 +954,7 @@ export default class CursorSmithPlugin extends Plugin {
     // -----------------------------------------------------------------------
     this.addCommand({
       id: "cycle-preset",
-      name: "Cycle preset",
+      name: t("Cycle preset"),
       callback: () => this.cycleActivePreset(1),
     });
 
@@ -962,7 +963,7 @@ export default class CursorSmithPlugin extends Plugin {
     // in 1.5.4, so a hotkey bound to the old id has to be bound again.
     this.addCommand({
       id: "toggle",
-      name: "Toggle on/off",
+      name: t("Toggle on/off"),
       callback: () => this.toggle(),
     });
 
@@ -971,13 +972,13 @@ export default class CursorSmithPlugin extends Plugin {
     // undo one were cut).
     this.addCommand({
       id: "randomize",
-      name: "Randomize",
+      name: t("Randomize"),
       callback: () => { void this.rollFromPalette(); },
     });
 
     this.addCommand({
       id: "toggle-cua-vim-mode",
-      name: "Toggle Vim mode",
+      name: t("Toggle Vim mode"),
       callback: () => this.toggleUiMode(),
     });
 
@@ -988,7 +989,7 @@ export default class CursorSmithPlugin extends Plugin {
     // into an issue.
     this.addCommand({
       id: "performance-report",
-      name: "Performance report (10 seconds, copied to the clipboard)",
+      name: t("Performance report (10 seconds, copied to the clipboard)"),
       callback: () => this.performanceReport(10),
     });
 
