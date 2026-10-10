@@ -160,7 +160,7 @@ Five, all in the Command Palette, all take a hotkey. The Behavior page shows the
 
 ## Building from source
 
-A TypeScript project: `src/` holds the modules, `npm run build` bundles them into `main.js`, `npm run check` type-checks, `npm test` runs the suite (2,500 assertions) against the built bundle. [BUILDING.md](BUILDING.md) has the layout.
+A TypeScript project: `src/` holds the modules, `npm run build` bundles them into `main.js`, `npm run check` type-checks, `npm test` runs the suite (2,600 assertions) against the built bundle. [BUILDING.md](BUILDING.md) has the layout.
 
 ## Pairs with Word-Smith
 
